@@ -1,0 +1,16 @@
+diff --git a/shared/updater/src/desktopMain/kotlin/com/abdownloadmanager/updateapplier/DesktopDirectLinkUpdateApplier.kt b/shared/updater/src/desktopMain/kotlin/com/abdownloadmanager/updateapplier/DesktopDirectLinkUpdateApplier.kt
+index 9641659f..745127aa 100644
+--- a/shared/updater/src/desktopMain/kotlin/com/abdownloadmanager/updateapplier/DesktopDirectLinkUpdateApplier.kt
++++ b/shared/updater/src/desktopMain/kotlin/com/abdownloadmanager/updateapplier/DesktopDirectLinkUpdateApplier.kt
+@@ -17,8 +17,9 @@ class DesktopDirectLinkUpdateApplier(
+         return updatePreparer
+     }
+     override fun updateSupported(): Boolean {
+-        val installationFolder = installationFolder ?: return false
+-        return File(installationFolder).canWrite()
++        // Never let the application download a release archive and replace its
++        // own installation. self-updater.hook handles updates instead.
++        return false
+     }
+ 
+     override fun validateAppStateOnApplyUpdate() {

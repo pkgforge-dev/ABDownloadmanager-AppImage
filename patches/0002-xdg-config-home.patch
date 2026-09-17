@@ -1,0 +1,22 @@
+diff --git a/desktop/app/src/main/kotlin/com/abdownloadmanager/desktop/utils/AppInfo.kt b/desktop/app/src/main/kotlin/com/abdownloadmanager/desktop/utils/AppInfo.kt
+index d3718c54..a9992af6 100644
+--- a/desktop/app/src/main/kotlin/com/abdownloadmanager/desktop/utils/AppInfo.kt
++++ b/desktop/app/src/main/kotlin/com/abdownloadmanager/desktop/utils/AppInfo.kt
+@@ -73,7 +73,16 @@ object AppInfo {
+ 
+     private fun getUserDataDir(): File {
+         val dataDirName = SharedConstants.dataDirName
+-        return File(System.getProperty("user.home"), dataDirName)
++        // keep the legacy location for installations that already use it
++        File(System.getProperty("user.home"), dataDirName)
++            .takeIf { it.exists() }
++            ?.let { return it }
++        val xdgConfigHome = System.getenv("XDG_CONFIG_HOME")
++            ?.takeIf { it.isNotBlank() }
++            ?.let(::File)
++            ?.takeIf { it.isAbsolute }
++            ?: File(System.getProperty("user.home"), ".config")
++        return File(xdgConfigHome, "abdm").apply { mkdirs() }
+     }
+ 
+     val dataDir by lazy {

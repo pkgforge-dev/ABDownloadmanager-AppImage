@@ -6,24 +6,40 @@ ARCH=$(uname -m)
 
 echo "Installing package dependencies..."
 echo "---------------------------------------------------------------"
-# pacman -Syu --noconfirm PACKAGESHERE
+pacman -Syu --noconfirm \
+	git           \
+	jdk25-openjdk \
+	libxrender    \
+	libxtst
 
 echo "Installing debloated packages..."
 echo "---------------------------------------------------------------"
 get-debloated-pkgs --add-common --prefer-nano
 
-# Comment this out if you need an AUR package
-#make-aur-package PACKAGENAME
+echo "Building AB Download Manager..."
+echo "---------------------------------------------------------------"
+git clone https://github.com/amir1376/ab-download-manager ./ab-download-manager && (
+	cd ./ab-download-manager
 
-# If the application needs to be manually built that has to be done down here
+	git fetch --tags origin
+	TAG=$(git tag --sort=-v:refname | grep -vi 'rc\|preview\|alpha\|beta' | head -1)
+	git checkout "$TAG"
 
-# if you also have to make nightly releases check for DEVEL_RELEASE = 1
-#
-# if [ "${DEVEL_RELEASE-}" = 1 ]; then
-# 	nightly build steps
-# else
-# 	regular build steps
-# fi
+	# no self-updating, self-updater.hook handles updates
+	git apply ../patches/*.patch
 
-# Note that when building manually, you want to output the version of the
-# application to a ~/version file and remove VERSION from make-appimage.sh
+	# desktop app-image only
+	SKIP_ANDROID_BUILD=true ./gradlew --no-daemon :desktop:app:createReleaseDistributable
+
+	echo "${TAG#v}" > ~/version
+)
+
+APP=./ab-download-manager/desktop/app/build/compose/binaries/main-release/app/ABDownloadManager
+
+# keep lib next to bin, the jpackage launcher expects it
+mkdir -p ./AppDir/bin ./AppDir/lib
+cp -r "$APP"/bin/. ./AppDir/bin/
+cp -r "$APP"/lib/. ./AppDir/lib/
+ln -s ../lib ./AppDir/bin/lib
+
+cp "$APP"/lib/ABDownloadManager.png ./AppDir/ABDownloadManager.png
